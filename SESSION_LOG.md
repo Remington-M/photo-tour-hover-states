@@ -203,6 +203,19 @@ intensity = min(tiltAmount × baseIntensity, maxIntensity)
   - Visual feedback: disabled controls dimmed to 50% opacity
 - **Design Decision:** Removed standard CSS easing (ease, ease-in, etc.) to focus on high-quality curves. Material provides excellent default behavior while springs offer premium feel when desired.
 
+### Hover Delay Parameter
+- **Feature:** Configurable delay before hover effects trigger
+- **Default:** 70ms for all effects
+- **Range:** 0-300ms adjustable via slider
+- **Purpose:** Prevent motion overload when quickly moving across images
+- **Benefits:**
+  - Reduces visual chaos during cursor scanning
+  - Feels more refined and intentional
+  - Prevents accidental triggering on fast mouse movements
+  - Keeps UI calm when browsing multiple items quickly
+- **Implementation:** Uses CSS `transition-delay` property
+- **Use Case:** Essential for grid layouts where users scan quickly across many items
+
 ## Next Steps / Potential Enhancements
 - [ ] Add combination effects (e.g., zoom + scrim, tilt + lighting + zoom)
 - [ ] Mobile/responsive versions of effects
