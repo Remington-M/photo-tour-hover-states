@@ -147,6 +147,31 @@ intensity = min(tiltAmount × baseIntensity, maxIntensity)
 - Dev panels should be collapsible and non-intrusive
 - Dual input (slider + number) provides best UX for precision
 
+## Git & GitHub Setup (February 18, 2026)
+
+### Repository Configuration
+- Initialized git repository with main branch
+- Created `.gitignore` for macOS and editor files
+- Created GitHub repository: `photo-tour-hover-states`
+- Repository URL: https://github.com/Remington-M/photo-tour-hover-states
+- Set to public visibility
+
+### Image Migration
+- **Challenge:** Prototype was using placeholder Unsplash images
+- **Solution:** Retrieved all 19 original images from Figma design file
+- **Process:**
+  1. Connected to Figma Desktop app via MCP server
+  2. Extracted image assets from localhost:3845 (Figma asset server)
+  3. Downloaded all images to local `images/` directory
+  4. Updated HTML to reference local paths instead of external URLs
+- **Result:** Project now works completely offline without Figma or Unsplash dependencies
+
+### Image Assets
+- **Total images:** 19 PNG files (9MB total)
+- **Naming convention:** `ratio-{aspect}-{number}.png`
+- **Aspect ratios:** 3:4, 4:3, 1:1, 16:9
+- **Storage:** `/images/` directory in project root
+
 ## Next Steps / Potential Enhancements
 - [ ] Add combination effects (e.g., zoom + scrim, tilt + lighting + zoom)
 - [ ] Mobile/responsive versions of effects
@@ -156,6 +181,8 @@ intensity = min(tiltAmount × baseIntensity, maxIntensity)
 - [ ] A/B testing framework integration
 - [ ] Performance metrics overlay
 - [ ] Video recording of interactions
+- [ ] Add README.md with project documentation
+- [ ] Set up GitHub Pages for live demo
 
 ## Performance Notes
 - All effects use CSS transforms and opacity for GPU acceleration
