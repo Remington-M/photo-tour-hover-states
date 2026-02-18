@@ -193,15 +193,19 @@ intensity = min(tiltAmount × baseIntensity, maxIntensity)
   - Uses [Linear Easing Generator](https://linear-easing-generator.netlify.app/)
 - **Available Easing Options (all effects):**
   - **Linear** - Constant velocity
-  - **Material** - cubic-bezier(0.4, 0, 0.2, 1) - Material Design curve (default)
+  - **Material** - cubic-bezier(0.4, 0, 0.2, 1) - Material Design curve (default for most)
+  - **Spring (Smooth)** - cubic-bezier(0.23, 1, 0.32, 1) - Generic spring curve (default for tilt)
   - **Spring (Standard)** - mass: 1, stiffness: 175, damping: 26.457 (1100ms)
   - **Spring (Slow)** - mass: 1, stiffness: 100, damping: 20 (1417ms)
 - **Spring Behavior:**
-  - Duration is automatically set to physics-generated value
-  - Duration controls are disabled when spring is active
+  - Physics-based springs (Standard/Slow) auto-set duration to generated value
+  - Duration controls are disabled when physics springs are active
   - Prevents breaking spring physics with arbitrary durations
   - Visual feedback: disabled controls dimmed to 50% opacity
-- **Design Decision:** Removed standard CSS easing (ease, ease-in, etc.) to focus on high-quality curves. Material provides excellent default behavior while springs offer premium feel when desired.
+- **Design Decision:**
+  - Removed standard CSS easing (ease, ease-in, etc.) to focus on high-quality curves
+  - Spring (Smooth) works best for tilt as it's less bouncy than physics springs
+  - Material provides excellent default for other effects
 
 ### Hover Delay Parameter
 - **Feature:** Configurable delay before hover effects trigger
@@ -215,6 +219,32 @@ intensity = min(tiltAmount × baseIntensity, maxIntensity)
   - Keeps UI calm when browsing multiple items quickly
 - **Implementation:** Uses CSS `transition-delay` property
 - **Use Case:** Essential for grid layouts where users scan quickly across many items
+
+### 3D Tilt Edge Lighting Controls
+- **Separate Shadow & Highlight Parameters:**
+  - **Highlight Intensity** (0-1.5, default: 0.8) - Brightness of light edge
+  - **Highlight Falloff** (10-60%, default: 20%) - How far highlight wraps around edge
+  - **Shadow Intensity** (0-1.5, default: 0.5) - Darkness of shadow edge
+  - **Shadow Falloff** (10-60%, default: 25%) - How far shadow wraps around edge
+- **Benefits:**
+  - Independent control of each lighting component
+  - Adjust wrap-around length separately for each
+  - Fine-tune balance between highlights and shadows
+  - Create subtle or dramatic bevel/emboss effects
+- **Implementation:**
+  - Uses dual-layer gradients (::before) + box shadows (::after)
+  - Directional lighting follows tilt angle
+  - Separate CSS custom properties for each intensity
+  - Shadow slightly less intense than highlight for natural look
+
+### LocalStorage Persistence Fix
+- **Issue:** New parameters added in updates weren't getting default values
+- **Solution:** Reversed merge order - defaults first, then saved values override
+- **Result:**
+  - Settings survive prototype updates cleanly
+  - New parameters automatically get their defaults
+  - Old saved settings preserved
+  - Graceful handling of missing properties
 
 ## Next Steps / Potential Enhancements
 - [ ] Add combination effects (e.g., zoom + scrim, tilt + lighting + zoom)
