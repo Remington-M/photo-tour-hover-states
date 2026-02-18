@@ -770,10 +770,31 @@
                         </div>
                     </div>
                     <div class="param-row">
-                        <div class="param-label">Edge Light Intensity</div>
+                        <div class="param-label">Highlight Intensity</div>
                         <div class="param-control">
-                            <input type="range" id="tilt-edge-intensity" min="0" max="1.5" step="0.05" value="0.8">
-                            <input type="number" id="tilt-edge-intensity-input" min="0" max="1.5" step="0.05" value="0.8">
+                            <input type="range" id="tilt-highlight-intensity" min="0" max="1.5" step="0.05" value="0.8">
+                            <input type="number" id="tilt-highlight-intensity-input" min="0" max="1.5" step="0.05" value="0.8">
+                        </div>
+                    </div>
+                    <div class="param-row">
+                        <div class="param-label">Highlight Falloff (%)</div>
+                        <div class="param-control">
+                            <input type="range" id="tilt-highlight-falloff" min="10" max="60" step="1" value="20">
+                            <input type="number" id="tilt-highlight-falloff-input" min="10" max="60" step="1" value="20">
+                        </div>
+                    </div>
+                    <div class="param-row">
+                        <div class="param-label">Shadow Intensity</div>
+                        <div class="param-control">
+                            <input type="range" id="tilt-shadow-intensity" min="0" max="1.5" step="0.05" value="0.5">
+                            <input type="number" id="tilt-shadow-intensity-input" min="0" max="1.5" step="0.05" value="0.5">
+                        </div>
+                    </div>
+                    <div class="param-row">
+                        <div class="param-label">Shadow Falloff (%)</div>
+                        <div class="param-control">
+                            <input type="range" id="tilt-shadow-falloff" min="10" max="60" step="1" value="25">
+                            <input type="number" id="tilt-shadow-falloff-input" min="10" max="60" step="1" value="25">
                         </div>
                     </div>
                     <div class="param-row">
@@ -791,18 +812,12 @@
                         </div>
                     </div>
                     <div class="param-row">
-                        <div class="param-label">Edge Falloff (%)</div>
-                        <div class="param-control">
-                            <input type="range" id="tilt-edge-falloff" min="10" max="60" step="1" value="20">
-                            <input type="number" id="tilt-edge-falloff-input" min="10" max="60" step="1" value="20">
-                        </div>
-                    </div>
-                    <div class="param-row">
                         <div class="param-label">Easing</div>
                         <div class="param-control">
                             <select id="tilt-easing">
                                 <option value="linear">Linear</option>
-                                <option value="cubic-bezier(0.4, 0, 0.2, 1)" selected>Material</option>
+                                <option value="cubic-bezier(0.4, 0, 0.2, 1)">Material</option>
+                                <option value="cubic-bezier(0.23, 1, 0.32, 1)" selected>Spring (Smooth)</option>
                                 <option value="linear(0.000, 0.086, 0.253, 0.427, 0.578, 0.697, 0.787, 0.853, 0.899, 0.932, 0.954, 0.969, 0.980, 0.987, 0.991, 0.994, 0.996, 0.998, 0.998, 0.999, 0.999, 1.000, 1.000, 1.000, 1.000, 1.000, 1.000, 1.000, 1.000, 1.000, 1.000)">Spring (Standard)</option>
                                 <option value="linear(0.000, 0.082, 0.244, 0.414, 0.563, 0.683, 0.775, 0.842, 0.891, 0.925, 0.949, 0.966, 0.977, 0.985, 0.990, 0.993, 0.996, 0.997, 0.998, 0.999, 0.999, 0.999, 1.000, 1.000, 1.000, 1.000, 1.000, 1.000, 1.000, 1.000, 1.000)">Spring (Slow)</option>
                             </select>
@@ -972,12 +987,14 @@
                 rotation: 2.5,
                 perspective: 1000,
                 duration: 300,
-                easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
+                easing: 'cubic-bezier(0.23, 1, 0.32, 1)',
                 delay: 70,
-                edgeLightIntensity: 0.8,
+                shadowIntensity: 0.5,
+                highlightIntensity: 0.8,
                 edgeWidth: 15,
                 edgeSharpness: 10,
-                edgeFalloff: 20
+                shadowFalloff: 25,
+                highlightFalloff: 20
             }
         };
 
@@ -1034,15 +1051,16 @@
                 const saved = localStorage.getItem('photoTourHoverParams');
                 if (saved) {
                     const loadedParams = JSON.parse(saved);
-                    // Merge saved params with defaults to handle new parameters
+                    // Merge defaults first, then override with saved values
+                    // This ensures new parameters get their defaults
                     params = {
-                        scrim: { ...defaultParams.scrim, ...loadedParams.scrim },
-                        zoom: { ...defaultParams.zoom, ...loadedParams.zoom },
-                        radius: { ...defaultParams.radius, ...loadedParams.radius },
-                        light: { ...defaultParams.light, ...loadedParams.light },
-                        tilt: { ...defaultParams.tilt, ...loadedParams.tilt }
+                        scrim: { ...defaultParams.scrim, ...(loadedParams.scrim || {}) },
+                        zoom: { ...defaultParams.zoom, ...(loadedParams.zoom || {}) },
+                        radius: { ...defaultParams.radius, ...(loadedParams.radius || {}) },
+                        light: { ...defaultParams.light, ...(loadedParams.light || {}) },
+                        tilt: { ...defaultParams.tilt, ...(loadedParams.tilt || {}) }
                     };
-                    console.log('Settings loaded from localStorage');
+                    console.log('Settings loaded from localStorage with defaults merged');
                 }
             } catch (e) {
                 console.warn('Could not load settings from localStorage:', e);
@@ -1196,16 +1214,16 @@
                         inset: 0;
                         background:
                             linear-gradient(var(--edge-angle, 0deg),
-                                rgba(255, 255, 255, var(--edge-intensity, 0)) 0%,
-                                rgba(255, 255, 255, calc(var(--edge-intensity, 0) * 0.5)) ${p.edgeWidth}%,
-                                rgba(255, 255, 255, 0) ${p.edgeFalloff}%),
+                                rgba(255, 255, 255, var(--highlight-intensity, 0)) 0%,
+                                rgba(255, 255, 255, calc(var(--highlight-intensity, 0) * 0.6)) ${p.edgeWidth}%,
+                                rgba(255, 255, 255, 0) ${p.highlightFalloff}%),
                             linear-gradient(calc(var(--edge-angle, 0deg) + 180deg),
-                                rgba(0, 0, 0, calc(var(--edge-intensity, 0) * 0.5)) 0%,
-                                rgba(0, 0, 0, calc(var(--edge-intensity, 0) * 0.3)) ${p.edgeWidth}%,
-                                rgba(0, 0, 0, 0) ${p.edgeFalloff}%);
+                                rgba(0, 0, 0, var(--shadow-intensity, 0)) 0%,
+                                rgba(0, 0, 0, calc(var(--shadow-intensity, 0) * 0.6)) ${p.edgeWidth}%,
+                                rgba(0, 0, 0, 0) ${p.shadowFalloff}%);
                         box-shadow:
-                            inset calc(var(--shadow-x, 0) * 1px) calc(var(--shadow-y, 0) * 1px) ${p.edgeSharpness * 3}px rgba(255, 255, 255, calc(var(--edge-intensity, 0) * 0.5)),
-                            inset calc(var(--shadow-x, 0) * -1px) calc(var(--shadow-y, 0) * -1px) ${p.edgeSharpness * 3}px rgba(0, 0, 0, calc(var(--edge-intensity, 0) * 0.3));
+                            inset calc(var(--shadow-x, 0) * 1px) calc(var(--shadow-y, 0) * 1px) ${p.edgeSharpness * 3}px rgba(255, 255, 255, calc(var(--highlight-intensity, 0) * 0.5)),
+                            inset calc(var(--shadow-x, 0) * -1px) calc(var(--shadow-y, 0) * -1px) ${p.edgeSharpness * 3}px rgba(0, 0, 0, calc(var(--shadow-intensity, 0) * 0.4));
                         opacity: 0;
                         transition: opacity ${p.duration}ms ${p.easing} ${p.delay}ms;
                         pointer-events: none;
@@ -1220,8 +1238,8 @@
                         inset: 0;
                         border-radius: inherit;
                         box-shadow:
-                            inset calc(var(--highlight-x, 0) * 2px) calc(var(--highlight-y, 0) * 2px) ${p.edgeSharpness}px rgba(255, 255, 255, calc(var(--edge-intensity, 0) * 0.8)),
-                            inset calc(var(--highlight-x, 0) * -2px) calc(var(--highlight-y, 0) * -2px) ${p.edgeSharpness}px rgba(0, 0, 0, calc(var(--edge-intensity, 0) * 0.5));
+                            inset calc(var(--highlight-x, 0) * 2px) calc(var(--highlight-y, 0) * 2px) ${p.edgeSharpness}px rgba(255, 255, 255, var(--highlight-intensity, 0)),
+                            inset calc(var(--highlight-x, 0) * -2px) calc(var(--highlight-y, 0) * -2px) ${p.edgeSharpness}px rgba(0, 0, 0, calc(var(--shadow-intensity, 0) * 0.7));
                         opacity: 0;
                         transition: opacity ${p.duration}ms ${p.easing} ${p.delay}ms;
                         pointer-events: none;
@@ -1355,10 +1373,12 @@
             bindControl('tilt-perspective', 'tilt-perspective-input', 'tilt.perspective', 'tilt', parseInt);
             bindControl('tilt-duration', 'tilt-duration-input', 'tilt.duration', 'tilt', parseInt);
             bindControl('tilt-delay', 'tilt-delay-input', 'tilt.delay', 'tilt', parseInt);
-            bindControl('tilt-edge-intensity', 'tilt-edge-intensity-input', 'tilt.edgeLightIntensity', 'tilt', parseFloat);
+            bindControl('tilt-highlight-intensity', 'tilt-highlight-intensity-input', 'tilt.highlightIntensity', 'tilt', parseFloat);
+            bindControl('tilt-highlight-falloff', 'tilt-highlight-falloff-input', 'tilt.highlightFalloff', 'tilt', parseInt);
+            bindControl('tilt-shadow-intensity', 'tilt-shadow-intensity-input', 'tilt.shadowIntensity', 'tilt', parseFloat);
+            bindControl('tilt-shadow-falloff', 'tilt-shadow-falloff-input', 'tilt.shadowFalloff', 'tilt', parseInt);
             bindControl('tilt-edge-width', 'tilt-edge-width-input', 'tilt.edgeWidth', 'tilt', parseInt);
             bindControl('tilt-edge-sharpness', 'tilt-edge-sharpness-input', 'tilt.edgeSharpness', 'tilt', parseInt);
-            bindControl('tilt-edge-falloff', 'tilt-edge-falloff-input', 'tilt.edgeFalloff', 'tilt', parseInt);
 
             document.getElementById('tilt-easing').addEventListener('change', (e) => {
                 params.tilt.easing = e.target.value;
@@ -1428,14 +1448,18 @@
             document.getElementById('tilt-delay').value = params.tilt.delay;
             document.getElementById('tilt-delay-input').value = params.tilt.delay;
             document.getElementById('tilt-easing').value = params.tilt.easing;
-            document.getElementById('tilt-edge-intensity').value = params.tilt.edgeLightIntensity;
-            document.getElementById('tilt-edge-intensity-input').value = params.tilt.edgeLightIntensity;
+            document.getElementById('tilt-highlight-intensity').value = params.tilt.highlightIntensity;
+            document.getElementById('tilt-highlight-intensity-input').value = params.tilt.highlightIntensity;
+            document.getElementById('tilt-highlight-falloff').value = params.tilt.highlightFalloff;
+            document.getElementById('tilt-highlight-falloff-input').value = params.tilt.highlightFalloff;
+            document.getElementById('tilt-shadow-intensity').value = params.tilt.shadowIntensity;
+            document.getElementById('tilt-shadow-intensity-input').value = params.tilt.shadowIntensity;
+            document.getElementById('tilt-shadow-falloff').value = params.tilt.shadowFalloff;
+            document.getElementById('tilt-shadow-falloff-input').value = params.tilt.shadowFalloff;
             document.getElementById('tilt-edge-width').value = params.tilt.edgeWidth;
             document.getElementById('tilt-edge-width-input').value = params.tilt.edgeWidth;
             document.getElementById('tilt-edge-sharpness').value = params.tilt.edgeSharpness;
             document.getElementById('tilt-edge-sharpness-input').value = params.tilt.edgeSharpness;
-            document.getElementById('tilt-edge-falloff').value = params.tilt.edgeFalloff;
-            document.getElementById('tilt-edge-falloff-input').value = params.tilt.edgeFalloff;
 
             // Update duration control states based on easing
             updateDurationControls('scrim', params.scrim.easing);
@@ -1530,31 +1554,54 @@ document.addEventListener('mousemove', (e) => {
                 const p = params.tilt;
                 return `.gallery-item {
     transform-style: preserve-3d;
-    transition: transform ${p.duration}ms ${p.easing};
+    transition: transform ${p.duration}ms ${p.easing} ${p.delay}ms;
 }
 
 .gallery-item img {
     transform: translateZ(0);
-    transition: transform ${p.duration}ms ${p.easing};
+    transition: transform ${p.duration}ms ${p.easing} ${p.delay}ms;
 }
 
 .gallery-item::before {
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(
-        var(--light-angle, 45deg),
-        rgba(255, 255, 255, var(--light-intensity, 0)) 0%,
-        rgba(255, 255, 255, 0) var(--light-spread, ${p.edgeLightSpread}%)
-    );
+    background:
+        linear-gradient(var(--edge-angle, 0deg),
+            rgba(255, 255, 255, var(--highlight-intensity, 0)) 0%,
+            rgba(255, 255, 255, calc(var(--highlight-intensity, 0) * 0.6)) ${p.edgeWidth}%,
+            rgba(255, 255, 255, 0) ${p.highlightFalloff}%),
+        linear-gradient(calc(var(--edge-angle, 0deg) + 180deg),
+            rgba(0, 0, 0, var(--shadow-intensity, 0)) 0%,
+            rgba(0, 0, 0, calc(var(--shadow-intensity, 0) * 0.6)) ${p.edgeWidth}%,
+            rgba(0, 0, 0, 0) ${p.shadowFalloff}%);
+    box-shadow:
+        inset calc(var(--shadow-x, 0) * 1px) calc(var(--shadow-y, 0) * 1px) ${p.edgeSharpness * 3}px rgba(255, 255, 255, calc(var(--highlight-intensity, 0) * 0.5)),
+        inset calc(var(--shadow-x, 0) * -1px) calc(var(--shadow-y, 0) * -1px) ${p.edgeSharpness * 3}px rgba(0, 0, 0, calc(var(--shadow-intensity, 0) * 0.4));
     opacity: 0;
-    transition: opacity ${p.duration}ms ${p.easing};
+    transition: opacity ${p.duration}ms ${p.easing} ${p.delay}ms;
     pointer-events: none;
     border-radius: inherit;
-    mix-blend-mode: overlay;
 }
 
 .gallery-item:hover::before {
+    opacity: 1;
+}
+
+.gallery-item::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow:
+        inset calc(var(--highlight-x, 0) * 2px) calc(var(--highlight-y, 0) * 2px) ${p.edgeSharpness}px rgba(255, 255, 255, var(--highlight-intensity, 0)),
+        inset calc(var(--highlight-x, 0) * -2px) calc(var(--highlight-y, 0) * -2px) ${p.edgeSharpness}px rgba(0, 0, 0, calc(var(--shadow-intensity, 0) * 0.7));
+    opacity: 0;
+    transition: opacity ${p.duration}ms ${p.easing} ${p.delay}ms;
+    pointer-events: none;
+}
+
+.gallery-item:hover::after {
     opacity: 1;
 }
 
@@ -1580,25 +1627,24 @@ document.addEventListener('mousemove', (e) => {
             // Calculate edge lighting angle and intensity
             const angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
             const tiltAmount = Math.sqrt(rotateX * rotateX + rotateY * rotateY) / ${p.rotation};
-            const intensity = Math.min(tiltAmount * ${p.edgeLightIntensity}, ${p.edgeLightIntensity});
+            const highlightIntensity = Math.min(tiltAmount * ${p.highlightIntensity}, ${p.highlightIntensity});
+            const shadowIntensity = Math.min(tiltAmount * ${p.shadowIntensity}, ${p.shadowIntensity});
 
-            const shadowMultiplier = intensity * 10;
+            const shadowMultiplier = shadowIntensity * 10;
             const shadowX = deltaX * shadowMultiplier;
             const shadowY = deltaY * shadowMultiplier;
 
             item.style.setProperty('--edge-angle', angle + 'deg');
-            item.style.setProperty('--edge-intensity', intensity);
+            item.style.setProperty('--highlight-intensity', highlightIntensity);
+            item.style.setProperty('--shadow-intensity', shadowIntensity);
             item.style.setProperty('--shadow-x', shadowX);
             item.style.setProperty('--shadow-y', shadowY);
             item.style.setProperty('--highlight-x', deltaX);
             item.style.setProperty('--highlight-y', deltaY);
-            item.style.setProperty('--edge-width', '${p.edgeWidth}%');
-            item.style.setProperty('--edge-sharpness', ${p.edgeSharpness});
-            item.style.setProperty('--edge-falloff', '${p.edgeFalloff}%');
-            item.style.setProperty('--edge-blur', ${p.edgeSharpness * 3});
         } else {
             item.style.transform = 'perspective(${p.perspective}px) rotateX(0deg) rotateY(0deg)';
-            item.style.setProperty('--edge-intensity', '0');
+            item.style.setProperty('--highlight-intensity', '0');
+            item.style.setProperty('--shadow-intensity', '0');
         }
     });
 });`;
@@ -1647,10 +1693,11 @@ document.addEventListener('mousemove', (e) => {
 
                         // Calculate intensity based on tilt amount
                         const tiltAmount = Math.sqrt(rotateX * rotateX + rotateY * rotateY) / params.tilt.rotation;
-                        const intensity = Math.min(tiltAmount * params.tilt.edgeLightIntensity, params.tilt.edgeLightIntensity);
+                        const highlightIntensity = Math.min(tiltAmount * params.tilt.highlightIntensity, params.tilt.highlightIntensity);
+                        const shadowIntensity = Math.min(tiltAmount * params.tilt.shadowIntensity, params.tilt.shadowIntensity);
 
                         // Calculate shadow offset based on tilt (opposite to tilt direction)
-                        const shadowMultiplier = intensity * 10;
+                        const shadowMultiplier = shadowIntensity * 10;
                         const shadowX = deltaX * shadowMultiplier;
                         const shadowY = deltaY * shadowMultiplier;
 
@@ -1659,18 +1706,16 @@ document.addEventListener('mousemove', (e) => {
                         const highlightY = deltaY;
 
                         item.style.setProperty('--edge-angle', `${edgeAngle}deg`);
-                        item.style.setProperty('--edge-intensity', intensity);
+                        item.style.setProperty('--highlight-intensity', highlightIntensity);
+                        item.style.setProperty('--shadow-intensity', shadowIntensity);
                         item.style.setProperty('--shadow-x', shadowX);
                         item.style.setProperty('--shadow-y', shadowY);
                         item.style.setProperty('--highlight-x', highlightX);
                         item.style.setProperty('--highlight-y', highlightY);
-                        item.style.setProperty('--edge-width', `${params.tilt.edgeWidth}%`);
-                        item.style.setProperty('--edge-sharpness', params.tilt.edgeSharpness);
-                        item.style.setProperty('--edge-falloff', `${params.tilt.edgeFalloff}%`);
-                        item.style.setProperty('--edge-blur', params.tilt.edgeSharpness * 3);
                     } else {
                         item.style.transform = `perspective(${params.tilt.perspective}px) rotateX(0deg) rotateY(0deg)`;
-                        item.style.setProperty('--edge-intensity', '0');
+                        item.style.setProperty('--highlight-intensity', '0');
+                        item.style.setProperty('--shadow-intensity', '0');
                     }
                 });
             }
@@ -1682,7 +1727,8 @@ document.addEventListener('mousemove', (e) => {
                 const items = document.querySelectorAll('.gallery-item');
                 items.forEach(item => {
                     item.style.transform = `perspective(${params.tilt.perspective}px) rotateX(0deg) rotateY(0deg)`;
-                    item.style.setProperty('--edge-intensity', '0');
+                    item.style.setProperty('--highlight-intensity', '0');
+                    item.style.setProperty('--shadow-intensity', '0');
                 });
             }
         });
