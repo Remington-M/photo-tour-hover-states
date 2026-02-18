@@ -191,14 +191,12 @@ intensity = min(tiltAmount × baseIntensity, maxIntensity)
   - Generated from Airbnb spring physics model
   - 31-point interpolation for smooth motion
   - Uses [Linear Easing Generator](https://linear-easing-generator.netlify.app/)
-- **Available Springs:**
-  - **Standard Spring:** mass: 1, stiffness: 175, damping: 26.457 (~1100ms duration)
-  - **Slow Spring:** mass: 1, stiffness: 100, damping: 20 (~1417ms duration)
-  - **Material Design:** cubic-bezier(0.4, 0, 0.2, 1)
-- **Defaults:**
-  - Tilt effect uses Standard Spring for premium feel
-  - Radius uses Material Design curve
-  - Others use standard CSS `ease`
+- **Available Easing Options (all effects):**
+  - **Linear** - Constant velocity
+  - **Material** - cubic-bezier(0.4, 0, 0.2, 1) - Material Design curve (default)
+  - **Spring (Standard)** - mass: 1, stiffness: 175, damping: 26.457 (~1100ms)
+  - **Spring (Slow)** - mass: 1, stiffness: 100, damping: 20 (~1417ms)
+- **Design Decision:** Removed standard CSS easing (ease, ease-in, etc.) to focus on high-quality curves. Material provides excellent default behavior while springs offer premium feel when desired.
 
 ## Next Steps / Potential Enhancements
 - [ ] Add combination effects (e.g., zoom + scrim, tilt + lighting + zoom)
