@@ -172,6 +172,19 @@ intensity = min(tiltAmount × baseIntensity, maxIntensity)
 - **Aspect ratios:** 3:4, 4:3, 1:1, 16:9
 - **Storage:** `/images/` directory in project root
 
+### Settings Persistence
+- **Feature:** Automatic localStorage saving
+- **Implementation:**
+  - All parameter changes auto-save immediately
+  - Settings persist across page refreshes and browser sessions
+  - Graceful merging with defaults for backward compatibility
+  - No manual save button required
+- **Storage key:** `photoTourHoverParams`
+- **Benefits:**
+  - Experiments can be resumed exactly where left off
+  - Settings survive prototype updates
+  - Zero friction - works transparently
+
 ## Next Steps / Potential Enhancements
 - [ ] Add combination effects (e.g., zoom + scrim, tilt + lighting + zoom)
 - [ ] Mobile/responsive versions of effects
