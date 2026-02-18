@@ -194,8 +194,13 @@ intensity = min(tiltAmount × baseIntensity, maxIntensity)
 - **Available Easing Options (all effects):**
   - **Linear** - Constant velocity
   - **Material** - cubic-bezier(0.4, 0, 0.2, 1) - Material Design curve (default)
-  - **Spring (Standard)** - mass: 1, stiffness: 175, damping: 26.457 (~1100ms)
-  - **Spring (Slow)** - mass: 1, stiffness: 100, damping: 20 (~1417ms)
+  - **Spring (Standard)** - mass: 1, stiffness: 175, damping: 26.457 (1100ms)
+  - **Spring (Slow)** - mass: 1, stiffness: 100, damping: 20 (1417ms)
+- **Spring Behavior:**
+  - Duration is automatically set to physics-generated value
+  - Duration controls are disabled when spring is active
+  - Prevents breaking spring physics with arbitrary durations
+  - Visual feedback: disabled controls dimmed to 50% opacity
 - **Design Decision:** Removed standard CSS easing (ease, ease-in, etc.) to focus on high-quality curves. Material provides excellent default behavior while springs offer premium feel when desired.
 
 ## Next Steps / Potential Enhancements
