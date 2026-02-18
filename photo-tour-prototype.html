@@ -912,7 +912,7 @@
         let currentStyle = 'scrim';
 
         // Parameters storage
-        const params = {
+        const defaultParams = {
             scrim: {
                 color: '#000000',
                 opacity: 0.3,
@@ -950,6 +950,37 @@
                 edgeFalloff: 20
             }
         };
+
+        let params = JSON.parse(JSON.stringify(defaultParams)); // Deep copy
+
+        // LocalStorage functions
+        function saveParams() {
+            try {
+                localStorage.setItem('photoTourHoverParams', JSON.stringify(params));
+            } catch (e) {
+                console.warn('Could not save settings to localStorage:', e);
+            }
+        }
+
+        function loadParams() {
+            try {
+                const saved = localStorage.getItem('photoTourHoverParams');
+                if (saved) {
+                    const loadedParams = JSON.parse(saved);
+                    // Merge saved params with defaults to handle new parameters
+                    params = {
+                        scrim: { ...defaultParams.scrim, ...loadedParams.scrim },
+                        zoom: { ...defaultParams.zoom, ...loadedParams.zoom },
+                        radius: { ...defaultParams.radius, ...loadedParams.radius },
+                        light: { ...defaultParams.light, ...loadedParams.light },
+                        tilt: { ...defaultParams.tilt, ...loadedParams.tilt }
+                    };
+                    console.log('Settings loaded from localStorage');
+                }
+            } catch (e) {
+                console.warn('Could not load settings from localStorage:', e);
+            }
+        }
 
         // Panel titles
         const panelTitles = {
@@ -1160,6 +1191,7 @@
                 input.value = e.target.value;
                 setNestedParam(paramPath, value);
                 applyStyles(style);
+                saveParams();
             });
 
             input.addEventListener('input', (e) => {
@@ -1167,6 +1199,7 @@
                 slider.value = e.target.value;
                 setNestedParam(paramPath, value);
                 applyStyles(style);
+                saveParams();
             });
         }
 
@@ -1189,12 +1222,14 @@
                 params.scrim.color = e.target.value;
                 scrimColorInput.value = e.target.value;
                 applyStyles('scrim');
+                saveParams();
             });
 
             scrimColorInput.addEventListener('input', (e) => {
                 params.scrim.color = e.target.value;
                 scrimColor.value = e.target.value;
                 applyStyles('scrim');
+                saveParams();
             });
 
             bindControl('scrim-opacity', 'scrim-opacity-input', 'scrim.opacity', 'scrim', parseFloat);
@@ -1203,6 +1238,7 @@
             document.getElementById('scrim-easing').addEventListener('change', (e) => {
                 params.scrim.easing = e.target.value;
                 applyStyles('scrim');
+                saveParams();
             });
 
             // Zoom controls
@@ -1212,6 +1248,7 @@
             document.getElementById('zoom-easing').addEventListener('change', (e) => {
                 params.zoom.easing = e.target.value;
                 applyStyles('zoom');
+                saveParams();
             });
 
             // Radius controls
@@ -1222,6 +1259,7 @@
             document.getElementById('radius-easing').addEventListener('change', (e) => {
                 params.radius.easing = e.target.value;
                 applyStyles('radius');
+                saveParams();
             });
 
             // Light controls
@@ -1235,6 +1273,7 @@
             document.getElementById('light-blend').addEventListener('change', (e) => {
                 params.light.blend = e.target.value;
                 applyStyles('light');
+                saveParams();
             });
 
             // Tilt controls
@@ -1249,7 +1288,68 @@
             document.getElementById('tilt-easing').addEventListener('change', (e) => {
                 params.tilt.easing = e.target.value;
                 applyStyles('tilt');
+                saveParams();
             });
+        }
+
+        // Update UI controls to reflect loaded params
+        function updateUIControls() {
+            // Scrim
+            document.getElementById('scrim-color').value = params.scrim.color;
+            document.getElementById('scrim-color-input').value = params.scrim.color;
+            document.getElementById('scrim-opacity').value = params.scrim.opacity;
+            document.getElementById('scrim-opacity-input').value = params.scrim.opacity;
+            document.getElementById('scrim-duration').value = params.scrim.duration;
+            document.getElementById('scrim-duration-input').value = params.scrim.duration;
+            document.getElementById('scrim-easing').value = params.scrim.easing;
+
+            // Zoom
+            document.getElementById('zoom-scale').value = params.zoom.scale;
+            document.getElementById('zoom-scale-input').value = params.zoom.scale;
+            document.getElementById('zoom-duration').value = params.zoom.duration;
+            document.getElementById('zoom-duration-input').value = params.zoom.duration;
+            document.getElementById('zoom-easing').value = params.zoom.easing;
+
+            // Radius
+            document.getElementById('radius-default').value = params.radius.default;
+            document.getElementById('radius-default-input').value = params.radius.default;
+            document.getElementById('radius-hover').value = params.radius.hover;
+            document.getElementById('radius-hover-input').value = params.radius.hover;
+            document.getElementById('radius-duration').value = params.radius.duration;
+            document.getElementById('radius-duration-input').value = params.radius.duration;
+            document.getElementById('radius-easing').value = params.radius.easing;
+
+            // Light
+            document.getElementById('light-size').value = params.light.size;
+            document.getElementById('light-size-input').value = params.light.size;
+            document.getElementById('light-opacity-center').value = params.light.opacityCenter;
+            document.getElementById('light-opacity-center-input').value = params.light.opacityCenter;
+            document.getElementById('light-opacity-mid').value = params.light.opacityMid;
+            document.getElementById('light-opacity-mid-input').value = params.light.opacityMid;
+            document.getElementById('light-mid-stop').value = params.light.midStop;
+            document.getElementById('light-mid-stop-input').value = params.light.midStop;
+            document.getElementById('light-fade-stop').value = params.light.fadeStop;
+            document.getElementById('light-fade-stop-input').value = params.light.fadeStop;
+            document.getElementById('light-duration').value = params.light.duration;
+            document.getElementById('light-duration-input').value = params.light.duration;
+            document.getElementById('light-blend').value = params.light.blend;
+
+            // Tilt
+            document.getElementById('tilt-rotation').value = params.tilt.rotation;
+            document.getElementById('tilt-rotation-input').value = params.tilt.rotation;
+            document.getElementById('tilt-perspective').value = params.tilt.perspective;
+            document.getElementById('tilt-perspective-input').value = params.tilt.perspective;
+            document.getElementById('tilt-duration').value = params.tilt.duration;
+            document.getElementById('tilt-duration-input').value = params.tilt.duration;
+            document.getElementById('tilt-easing').value = params.tilt.easing;
+            document.getElementById('tilt-edge-intensity').value = params.tilt.edgeLightIntensity;
+            document.getElementById('tilt-edge-intensity-input').value = params.tilt.edgeLightIntensity;
+            document.getElementById('tilt-edge-width').value = params.tilt.edgeWidth;
+            document.getElementById('tilt-edge-width-input').value = params.tilt.edgeWidth;
+            document.getElementById('tilt-edge-sharpness').value = params.tilt.edgeSharpness;
+            document.getElementById('tilt-edge-sharpness-input').value = params.tilt.edgeSharpness;
+            document.getElementById('tilt-edge-falloff').value = params.tilt.edgeFalloff;
+            document.getElementById('tilt-edge-falloff-input').value = params.tilt.edgeFalloff;
         }
 
         // Copy CSS functionality
@@ -1496,8 +1596,10 @@ document.addEventListener('mousemove', (e) => {
         });
 
         // Initialize on load
-        initControls();
-        applyStyles('scrim');
+        loadParams();        // Load saved settings first
+        initControls();      // Initialize event listeners
+        updateUIControls();  // Update UI to match loaded params
+        applyStyles('scrim'); // Apply the loaded styles
     </script>
 </body>
 </html>
