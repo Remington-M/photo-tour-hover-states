@@ -404,6 +404,11 @@
             -webkit-appearance: none;
         }
 
+        .param-control input[type="range"]:disabled,
+        .param-control input[type="number"]:disabled {
+            cursor: not-allowed;
+        }
+
         .param-control input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
@@ -945,6 +950,43 @@
 
         let params = JSON.parse(JSON.stringify(defaultParams)); // Deep copy
 
+        // Spring duration constants
+        const SPRING_STANDARD = 'linear(0.000, 0.086, 0.253, 0.427, 0.578, 0.697, 0.787, 0.853, 0.899, 0.932, 0.954, 0.969, 0.980, 0.987, 0.991, 0.994, 0.996, 0.998, 0.998, 0.999, 0.999, 1.000, 1.000, 1.000, 1.000, 1.000, 1.000, 1.000, 1.000, 1.000, 1.000)';
+        const SPRING_SLOW = 'linear(0.000, 0.082, 0.244, 0.414, 0.563, 0.683, 0.775, 0.842, 0.891, 0.925, 0.949, 0.966, 0.977, 0.985, 0.990, 0.993, 0.996, 0.997, 0.998, 0.999, 0.999, 0.999, 1.000, 1.000, 1.000, 1.000, 1.000, 1.000, 1.000, 1.000, 1.000)';
+        const SPRING_STANDARD_DURATION = 1100;
+        const SPRING_SLOW_DURATION = 1417;
+
+        function isSpring(easing) {
+            return easing === SPRING_STANDARD || easing === SPRING_SLOW;
+        }
+
+        function getSpringDuration(easing) {
+            if (easing === SPRING_STANDARD) return SPRING_STANDARD_DURATION;
+            if (easing === SPRING_SLOW) return SPRING_SLOW_DURATION;
+            return null;
+        }
+
+        function updateDurationControls(style, easing) {
+            const durationSlider = document.getElementById(`${style}-duration`);
+            const durationInput = document.getElementById(`${style}-duration-input`);
+
+            if (isSpring(easing)) {
+                const springDuration = getSpringDuration(easing);
+                params[style].duration = springDuration;
+                durationSlider.value = springDuration;
+                durationInput.value = springDuration;
+                durationSlider.disabled = true;
+                durationInput.disabled = true;
+                durationSlider.style.opacity = '0.5';
+                durationInput.style.opacity = '0.5';
+            } else {
+                durationSlider.disabled = false;
+                durationInput.disabled = false;
+                durationSlider.style.opacity = '1';
+                durationInput.style.opacity = '1';
+            }
+        }
+
         // LocalStorage functions
         function saveParams() {
             try {
@@ -1229,6 +1271,7 @@
 
             document.getElementById('scrim-easing').addEventListener('change', (e) => {
                 params.scrim.easing = e.target.value;
+                updateDurationControls('scrim', e.target.value);
                 applyStyles('scrim');
                 saveParams();
             });
@@ -1239,6 +1282,7 @@
 
             document.getElementById('zoom-easing').addEventListener('change', (e) => {
                 params.zoom.easing = e.target.value;
+                updateDurationControls('zoom', e.target.value);
                 applyStyles('zoom');
                 saveParams();
             });
@@ -1250,6 +1294,7 @@
 
             document.getElementById('radius-easing').addEventListener('change', (e) => {
                 params.radius.easing = e.target.value;
+                updateDurationControls('radius', e.target.value);
                 applyStyles('radius');
                 saveParams();
             });
@@ -1279,6 +1324,7 @@
 
             document.getElementById('tilt-easing').addEventListener('change', (e) => {
                 params.tilt.easing = e.target.value;
+                updateDurationControls('tilt', e.target.value);
                 applyStyles('tilt');
                 saveParams();
             });
@@ -1342,6 +1388,12 @@
             document.getElementById('tilt-edge-sharpness-input').value = params.tilt.edgeSharpness;
             document.getElementById('tilt-edge-falloff').value = params.tilt.edgeFalloff;
             document.getElementById('tilt-edge-falloff-input').value = params.tilt.edgeFalloff;
+
+            // Update duration control states based on easing
+            updateDurationControls('scrim', params.scrim.easing);
+            updateDurationControls('zoom', params.zoom.easing);
+            updateDurationControls('radius', params.radius.easing);
+            updateDurationControls('tilt', params.tilt.easing);
         }
 
         // Copy CSS functionality
