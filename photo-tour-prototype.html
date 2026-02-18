@@ -1,0 +1,1503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photo Tour - Hover State Prototype</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Airbnb Cereal VF', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #ffffff;
+            padding: 40px;
+            color: #222222;
+        }
+
+        .container {
+            max-width: 1440px;
+            margin: 0 auto;
+        }
+
+        .header {
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 40px;
+            font-weight: 500;
+            color: #6c6c6c;
+            letter-spacing: -0.8px;
+            margin-bottom: 20px;
+        }
+
+        .controls {
+            background: #f7f7f7;
+            padding: 24px;
+            border-radius: 16px;
+            margin-bottom: 40px;
+        }
+
+        .controls h2 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .hover-options {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .hover-option {
+            padding: 12px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .hover-option:hover {
+            border-color: #222222;
+            transform: translateY(-2px);
+        }
+
+        .hover-option.active {
+            background: #222222;
+            color: white;
+            border-color: #222222;
+        }
+
+        .section {
+            margin-bottom: 64px;
+        }
+
+        .section-header {
+            margin-bottom: 32px;
+        }
+
+        .section-title {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .section-subtitle {
+            font-size: 14px;
+            color: #717171;
+        }
+
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+
+        .gallery-item {
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            background: #e0e0e0;
+        }
+
+        /* Default border radius (will be overridden by radius hover style) */
+        .hover-scrim .gallery-item,
+        .hover-zoom .gallery-item,
+        .hover-light .gallery-item,
+        .hover-tilt .gallery-item {
+            border-radius: 32px;
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        /* Different aspect ratios */
+        .ratio-3-4 { grid-row: span 2; }
+        .ratio-4-3 { grid-row: span 1; }
+        .ratio-1-1 { grid-row: span 1; }
+        .ratio-16-9 { grid-row: span 1; }
+
+        /* Hover State 1: Simple Scrim */
+        .hover-scrim .gallery-item::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0);
+            transition: background 0.3s ease;
+            pointer-events: none;
+        }
+
+        .hover-scrim .gallery-item:hover::after {
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        /* Hover State 2: Subtle Zoom (1%) */
+        .hover-zoom .gallery-item img {
+            transition: transform 0.4s ease;
+        }
+
+        .hover-zoom .gallery-item:hover img {
+            transform: scale(1.01);
+        }
+
+        /* Hover State 3: Border Radius Change */
+        .hover-radius .gallery-item {
+            transition: border-radius 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .hover-radius .gallery-item:hover {
+            border-radius: 56px;
+        }
+
+        /* Hover State 4: Lighting Effect (Mouse Follow) */
+        .hover-light .gallery-item {
+            position: relative;
+        }
+
+        .hover-light .gallery-item::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle 400px at var(--mouse-x, 50%) var(--mouse-y, 50%),
+                rgba(255, 255, 255, 0.25) 0%,
+                rgba(255, 255, 255, 0.1) 30%,
+                transparent 60%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            pointer-events: none;
+            border-radius: inherit;
+            mix-blend-mode: overlay;
+        }
+
+        .hover-light .gallery-item:hover::before {
+            opacity: 1;
+        }
+
+        /* Hover State 5: 3D Tilt (Mouse Follow) */
+        .hover-tilt .gallery-item {
+            transform-style: preserve-3d;
+            transition: transform 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .hover-tilt .gallery-item img {
+            transform: translateZ(0);
+            transition: transform 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .hover-tilt .gallery-item::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                linear-gradient(var(--edge-angle, 0deg),
+                    rgba(255, 255, 255, var(--edge-intensity, 0)) 0%,
+                    rgba(255, 255, 255, calc(var(--edge-intensity, 0) * 0.5)) var(--edge-width, 15%),
+                    rgba(255, 255, 255, 0) var(--edge-falloff, 30%)),
+                linear-gradient(calc(var(--edge-angle, 0deg) + 180deg),
+                    rgba(0, 0, 0, calc(var(--edge-intensity, 0) * 0.5)) 0%,
+                    rgba(0, 0, 0, calc(var(--edge-intensity, 0) * 0.3)) var(--edge-width, 15%),
+                    rgba(0, 0, 0, 0) var(--edge-falloff, 30%));
+            box-shadow:
+                inset calc(var(--shadow-x, 0) * 1px) calc(var(--shadow-y, 0) * 1px) calc(var(--edge-blur, 30) * 1px) rgba(255, 255, 255, calc(var(--edge-intensity, 0) * 0.5)),
+                inset calc(var(--shadow-x, 0) * -1px) calc(var(--shadow-y, 0) * -1px) calc(var(--edge-blur, 30) * 1px) rgba(0, 0, 0, calc(var(--edge-intensity, 0) * 0.3));
+            opacity: 0;
+            transition: opacity 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+            pointer-events: none;
+            border-radius: inherit;
+        }
+
+        .hover-tilt .gallery-item:hover::before {
+            opacity: 1;
+        }
+
+        .hover-tilt .gallery-item::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            box-shadow:
+                inset calc(var(--highlight-x, 0) * 2px) calc(var(--highlight-y, 0) * 2px) calc(var(--edge-sharpness, 20) * 1px) rgba(255, 255, 255, calc(var(--edge-intensity, 0) * 0.8)),
+                inset calc(var(--highlight-x, 0) * -2px) calc(var(--highlight-y, 0) * -2px) calc(var(--edge-sharpness, 20) * 1px) rgba(0, 0, 0, calc(var(--edge-intensity, 0) * 0.5));
+            opacity: 0;
+            transition: opacity 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+            pointer-events: none;
+        }
+
+        .hover-tilt .gallery-item:hover::after {
+            opacity: 1;
+        }
+
+        .info-banner {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 24px;
+            font-size: 14px;
+            color: #856404;
+        }
+
+        .info-banner strong {
+            font-weight: 600;
+        }
+
+        .dev-toggle-btn {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: #222222;
+            color: white;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .dev-toggle-btn:hover {
+            background: #333333;
+            transform: scale(1.05);
+        }
+
+        .dev-toggle-btn.active {
+            background: #4CAF50;
+        }
+
+        .dev-panel-container {
+            position: fixed;
+            bottom: 92px;
+            right: 24px;
+            width: 360px;
+            max-height: 70vh;
+            background: rgba(26, 26, 26, 0.98);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            overflow: hidden;
+            transform: translateY(20px);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 999;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .dev-panel-container.open {
+            transform: translateY(0);
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .dev-panel-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .dev-panel-header h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #ffffff;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dev-panel-close {
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s;
+        }
+
+        .dev-panel-close:hover {
+            color: #fff;
+        }
+
+        .dev-panel {
+            display: none;
+            overflow-y: auto;
+            max-height: calc(70vh - 120px);
+            padding: 20px;
+        }
+
+        .dev-panel::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .dev-panel::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .dev-panel::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+
+        .dev-panel::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .dev-panel.active {
+            display: block;
+        }
+
+        .param-group {
+            margin-bottom: 16px;
+        }
+
+        .param-row {
+            margin-bottom: 16px;
+        }
+
+        .param-label {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 6px;
+            display: block;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .param-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .param-control input[type="range"] {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            background: #444;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .param-control input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #ffffff;
+            cursor: pointer;
+        }
+
+        .param-control input[type="range"]::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #ffffff;
+            cursor: pointer;
+            border: none;
+        }
+
+        .param-control input[type="color"] {
+            width: 40px;
+            height: 32px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            cursor: pointer;
+            background: transparent;
+        }
+
+        .param-control input[type="number"],
+        .param-control input[type="text"] {
+            width: 70px;
+            padding: 6px 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            color: #4CAF50;
+            font-size: 12px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            text-align: center;
+        }
+
+        .param-control input[type="number"]:focus,
+        .param-control input[type="text"]:focus {
+            outline: none;
+            border-color: #4CAF50;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .param-control select {
+            flex: 1;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+            color: #f0f0f0;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .param-control select:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+
+        .param-value {
+            min-width: 60px;
+            text-align: right;
+            font-size: 12px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            color: #4CAF50;
+            display: none;
+        }
+
+        .dev-panel-footer {
+            padding: 16px 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .copy-css-btn {
+            width: 100%;
+            padding: 12px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .copy-css-btn:hover {
+            background: #45a049;
+            transform: translateY(-1px);
+        }
+
+        .copy-css-btn:active {
+            background: #3d8b40;
+            transform: translateY(0);
+        }
+
+        .copy-css-btn.copied {
+            background: #2196F3;
+        }
+
+        .copied-notification {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Photo Tour Hover State Prototype</h1>
+        </div>
+
+        <div class="info-banner">
+            <strong>Interactive Prototype:</strong> Select a hover style below and click the ⚙️ button (bottom right) to adjust parameters in real-time. Move your mouse over the images to preview effects.
+        </div>
+
+        <div class="controls">
+            <h2>Choose Hover Style:</h2>
+            <div class="hover-options">
+                <button class="hover-option active" data-style="scrim">1. Simple Scrim</button>
+                <button class="hover-option" data-style="zoom">2. Subtle Zoom (1%)</button>
+                <button class="hover-option" data-style="radius">3. Expand Border Radius</button>
+                <button class="hover-option" data-style="light">4. Lighting Effect (Mouse Follow)</button>
+                <button class="hover-option" data-style="tilt">5. 3D Tilt (Mouse Follow)</button>
+            </div>
+        </div>
+
+        <!-- Dev Panel Toggle Button -->
+        <button class="dev-toggle-btn" id="dev-toggle" title="Toggle Dev Panel">
+            ⚙️
+        </button>
+
+        <!-- Dev Panel Container -->
+        <div class="dev-panel-container" id="dev-panel-container">
+            <div class="dev-panel-header">
+                <h3 id="panel-title">🎨 Scrim Parameters</h3>
+                <button class="dev-panel-close" id="panel-close">×</button>
+            </div>
+
+            <!-- Scrim Panel -->
+            <div id="dev-panel-scrim" class="dev-panel active">
+                <div class="param-group">
+                    <div class="param-row">
+                        <div class="param-label">Color</div>
+                        <div class="param-control">
+                            <input type="color" id="scrim-color" value="#000000">
+                            <input type="text" id="scrim-color-input" value="#000000">
+                        </div>
+                    </div>
+                    <div class="param-row">
+                        <div class="param-label">Opacity</div>
+                        <div class="param-control">
+                            <input type="range" id="scrim-opacity" min="0" max="1" step="0.01" value="0.3">
+                            <input type="number" id="scrim-opacity-input" min="0" max="1" step="0.01" value="0.3">
+                        </div>
+                    </div>
+                    <div class="param-row">
+                        <div class="param-label">Duration (ms)</div>
+                        <div class="param-control">
+                            <input type="range" id="scrim-duration" min="100" max="1000" step="50" value="300">
+                            <input type="number" id="scrim-duration-input" min="100" max="1000" step="50" value="300">
+                        </div>
+                    </div>
+                    <div class="param-row">
+                        <div class="param-label">Easing</div>
+                        <div class="param-control">
+                            <select id="scrim-easing">
+                                <option value="ease">ease</option>
+                                <option value="ease-in">ease-in</option>
+                                <option value="ease-out">ease-out</option>
+                                <option value="ease-in-out">ease-in-out</option>
+                                <option value="linear">linear</option>
+                                <option value="cubic-bezier(0.4, 0, 0.2, 1)">material</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Zoom Panel -->
+            <div id="dev-panel-zoom" class="dev-panel">
+                <div class="param-group">
+                    <div class="param-row">
+                        <div class="param-label">Scale Amount</div>
+                        <div class="param-control">
+                            <input type="range" id="zoom-scale" min="1" max="1.2" step="0.001" value="1.01">
+                            <input type="number" id="zoom-scale-input" min="1" max="1.2" step="0.001" value="1.01">
+                        </div>
+                    </div>
+                    <div class="param-row">
+                        <div class="param-label">Duration (ms)</div>
+                        <div class="param-control">
+                            <input type="range" id="zoom-duration" min="100" max="1000" step="50" value="400">
+                            <input type="number" id="zoom-duration-input" min="100" max="1000" step="50" value="400">
+                        </div>
+                    </div>
+                    <div class="param-row">
+                        <div class="param-label">Easing</div>
+                        <div class="param-control">
+                            <select id="zoom-easing">
+                                <option value="ease">ease</option>
+                                <option value="ease-in">ease-in</option>
+                                <option value="ease-out">ease-out</option>
+                                <option value="ease-in-out">ease-in-out</option>
+                                <option value="linear">linear</option>
+                                <option value="cubic-bezier(0.4, 0, 0.2, 1)">material</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Radius Panel -->
+            <div id="dev-panel-radius" class="dev-panel">
+                <div class="param-group">
+                    <div class="param-row">
+                        <div class="param-label">Default Radius (px)</div>
+                        <div class="param-control">
+                            <input type="range" id="radius-default" min="0" max="64" step="1" value="32">
+                            <input type="number" id="radius-default-input" min="0" max="64" step="1" value="32">
+                        </div>
+                    </div>
+                    <div class="param-row">
+                        <div class="param-label">Hover Radius (px)</div>
+                        <div class="param-control">
+                            <input type="range" id="radius-hover" min="0" max="100" step="1" value="56">
+                            <input type="number" id="radius-hover-input" min="0" max="100" step="1" value="56">
+                        </div>
+                    </div>
+                    <div class="param-row">
+                        <div class="param-label">Duration (ms)</div>
+                        <div class="param-control">
+                            <input type="range" id="radius-duration" min="100" max="1000" step="50" value="500">
+                            <input type="number" id="radius-duration-input" min="100" max="1000" step="50" value="500">
+                        </div>
+                    </div>
+                    <div class="param-row">
+                        <div class="param-label">Easing</div>
+                        <div class="param-control">
+                            <select id="radius-easing">
+                                <option value="ease">ease</option>
+                                <option value="ease-in">ease-in</option>
+                                <option value="ease-out">ease-out</option>
+                                <option value="ease-in-out">ease-in-out</option>
+                                <option value="linear">linear</option>
+                                <option value="cubic-bezier(0.4, 0, 0.2, 1)" selected>material</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lighting Panel -->
+            <div id="dev-panel-light" class="dev-panel">
+                <div class="param-group">
+                    <div class="param-row">
+                        <div class="param-label">Glow Size (px)</div>
+                        <div class="param-control">
+                            <input type="range" id="light-size" min="100" max="800" step="50" value="400">
+                            <input type="number" id="light-size-input" min="100" max="800" step="50" value="400">
+                        </div>
+                    </div>
+                    <div class="param-row">
+                        <div class="param-label">Center Opacity</div>
+                        <div class="param-control">
+                            <input type="range" id="light-opacity-center" min="0" max="1" step="0.01" value="0.25">
+                            <input type="number" id="light-opacity-center-input" min="0" max="1" step="0.01" value="0.25">
+                        </div>
+                    </div>
+                    <div class="param-row">
+                        <div class="param-label">Mid Opacity</div>
+                        <div class="param-control">
+                            <input type="range" id="light-opacity-mid" min="0" max="1" step="0.01" value="0.1">
+                            <input type="number" id="light-opacity-mid-input" min="0" max="1" step="0.01" value="0.1">
+                        </div>
+                    </div>
+                    <div class="param-row">
+                        <div class="param-label">Mid Stop (%)</div>
+                        <div class="param-control">
+                            <input type="range" id="light-mid-stop" min="0" max="100" step="5" value="30">
+                            <input type="number" id="light-mid-stop-input" min="0" max="100" step="5" value="30">
+                        </div>
+                    </div>
+                    <div class="param-row">
+                        <div class="param-label">Fade Stop (%)</div>
+                        <div class="param-control">
+                            <input type="range" id="light-fade-stop" min="0" max="100" step="5" value="60">
+                            <input type="number" id="light-fade-stop-input" min="0" max="100" step="5" value="60">
+                        </div>
+                    </div>
+                    <div class="param-row">
+                        <div class="param-label">Duration (ms)</div>
+                        <div class="param-control">
+                            <input type="range" id="light-duration" min="100" max="1000" step="50" value="400">
+                            <input type="number" id="light-duration-input" min="100" max="1000" step="50" value="400">
+                        </div>
+                    </div>
+                    <div class="param-row">
+                        <div class="param-label">Blend Mode</div>
+                        <div class="param-control">
+                            <select id="light-blend">
+                                <option value="overlay" selected>overlay</option>
+                                <option value="screen">screen</option>
+                                <option value="soft-light">soft-light</option>
+                                <option value="hard-light">hard-light</option>
+                                <option value="normal">normal</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tilt Panel -->
+            <div id="dev-panel-tilt" class="dev-panel">
+                <div class="param-group">
+                    <div class="param-row">
+                        <div class="param-label">Max Rotation (deg)</div>
+                        <div class="param-control">
+                            <input type="range" id="tilt-rotation" min="0" max="15" step="0.5" value="2.5">
+                            <input type="number" id="tilt-rotation-input" min="0" max="15" step="0.5" value="2.5">
+                        </div>
+                    </div>
+                    <div class="param-row">
+                        <div class="param-label">Perspective (px)</div>
+                        <div class="param-control">
+                            <input type="range" id="tilt-perspective" min="500" max="2000" step="100" value="1000">
+                            <input type="number" id="tilt-perspective-input" min="500" max="2000" step="100" value="1000">
+                        </div>
+                    </div>
+                    <div class="param-row">
+                        <div class="param-label">Duration (ms)</div>
+                        <div class="param-control">
+                            <input type="range" id="tilt-duration" min="100" max="1000" step="50" value="300">
+                            <input type="number" id="tilt-duration-input" min="100" max="1000" step="50" value="300">
+                        </div>
+                    </div>
+                    <div class="param-row">
+                        <div class="param-label">Edge Light Intensity</div>
+                        <div class="param-control">
+                            <input type="range" id="tilt-edge-intensity" min="0" max="1.5" step="0.05" value="0.8">
+                            <input type="number" id="tilt-edge-intensity-input" min="0" max="1.5" step="0.05" value="0.8">
+                        </div>
+                    </div>
+                    <div class="param-row">
+                        <div class="param-label">Edge Width (%)</div>
+                        <div class="param-control">
+                            <input type="range" id="tilt-edge-width" min="5" max="40" step="1" value="15">
+                            <input type="number" id="tilt-edge-width-input" min="5" max="40" step="1" value="15">
+                        </div>
+                    </div>
+                    <div class="param-row">
+                        <div class="param-label">Edge Sharpness (px)</div>
+                        <div class="param-control">
+                            <input type="range" id="tilt-edge-sharpness" min="0" max="50" step="1" value="10">
+                            <input type="number" id="tilt-edge-sharpness-input" min="0" max="50" step="1" value="10">
+                        </div>
+                    </div>
+                    <div class="param-row">
+                        <div class="param-label">Edge Falloff (%)</div>
+                        <div class="param-control">
+                            <input type="range" id="tilt-edge-falloff" min="10" max="60" step="1" value="20">
+                            <input type="number" id="tilt-edge-falloff-input" min="10" max="60" step="1" value="20">
+                        </div>
+                    </div>
+                    <div class="param-row">
+                        <div class="param-label">Easing</div>
+                        <div class="param-control">
+                            <select id="tilt-easing">
+                                <option value="ease">ease</option>
+                                <option value="ease-in">ease-in</option>
+                                <option value="ease-out">ease-out</option>
+                                <option value="ease-in-out">ease-in-out</option>
+                                <option value="linear">linear</option>
+                                <option value="cubic-bezier(0.23, 1, 0.32, 1)" selected>spring</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dev-panel-footer">
+                <button class="copy-css-btn" id="copy-css-btn">
+                    <span>📋 Copy CSS</span>
+                </button>
+            </div>
+        </div>
+
+        <div id="gallery-container" class="hover-scrim">
+            <!-- Property Section -->
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-title">Property</div>
+                    <div class="section-subtitle">Lobby · Park view · Meeting rooms</div>
+                </div>
+                <div class="gallery">
+                    <div class="gallery-item ratio-3-4" data-caption="Lobby Entrance">
+                        <img src="https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=400&h=600&fit=crop" alt="Property">
+                    </div>
+                    <div class="gallery-item ratio-4-3" data-caption="Lounge Area">
+                        <img src="https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=400&h=300&fit=crop" alt="Property">
+                    </div>
+                    <div class="gallery-item ratio-1-1" data-caption="Meeting Space">
+                        <img src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&h=400&fit=crop" alt="Property">
+                    </div>
+                    <div class="gallery-item ratio-4-3" data-caption="Workspace">
+                        <img src="https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=400&h=300&fit=crop" alt="Property">
+                    </div>
+                    <div class="gallery-item ratio-1-1" data-caption="Conference Room">
+                        <img src="https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=400&h=400&fit=crop" alt="Property">
+                    </div>
+                    <div class="gallery-item ratio-3-4" data-caption="Park View">
+                        <img src="https://images.unsplash.com/photo-1615874959474-d609969a20ed?w=400&h=600&fit=crop" alt="Property">
+                    </div>
+                    <div class="gallery-item ratio-4-3" data-caption="Terrace">
+                        <img src="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=400&h=300&fit=crop" alt="Property">
+                    </div>
+                    <div class="gallery-item ratio-3-4" data-caption="Garden View">
+                        <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400&h=600&fit=crop" alt="Property">
+                    </div>
+                    <div class="gallery-item ratio-16-9" data-caption="Outdoor Space">
+                        <img src="https://images.unsplash.com/photo-1600607687644-c7171b42498f?w=600&h=400&fit=crop" alt="Property">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Restaurant Section -->
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-title">Restaurant</div>
+                    <div class="section-subtitle">Feature 1 · Feature 2 · Feature 3</div>
+                </div>
+                <div class="gallery">
+                    <div class="gallery-item ratio-3-4" data-caption="Dining Room">
+                        <img src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&h=600&fit=crop" alt="Restaurant">
+                    </div>
+                    <div class="gallery-item ratio-4-3" data-caption="Bar Area">
+                        <img src="https://images.unsplash.com/photo-1559339352-11d035aa65de?w=400&h=300&fit=crop" alt="Restaurant">
+                    </div>
+                    <div class="gallery-item ratio-3-4" data-caption="Seating">
+                        <img src="https://images.unsplash.com/photo-1552566626-52f8b828add9?w=400&h=600&fit=crop" alt="Restaurant">
+                    </div>
+                    <div class="gallery-item ratio-4-3" data-caption="Kitchen View">
+                        <img src="https://images.unsplash.com/photo-1466978913421-dad2ebd01d17?w=400&h=300&fit=crop" alt="Restaurant">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Classic Room Section -->
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-title">Classic Room</div>
+                    <div class="section-subtitle">Feature 1 · Feature 2 · Feature 3</div>
+                </div>
+                <div class="gallery">
+                    <div class="gallery-item ratio-3-4" data-caption="Bedroom">
+                        <img src="https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=400&h=600&fit=crop" alt="Classic Room">
+                    </div>
+                    <div class="gallery-item ratio-4-3" data-caption="Bathroom">
+                        <img src="https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=400&h=300&fit=crop" alt="Classic Room">
+                    </div>
+                    <div class="gallery-item ratio-1-1" data-caption="Desk Area">
+                        <img src="https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400&h=400&fit=crop" alt="Classic Room">
+                    </div>
+                    <div class="gallery-item ratio-4-3" data-caption="Sitting Area">
+                        <img src="https://images.unsplash.com/photo-1590490360182-c33d57733427?w=400&h=300&fit=crop" alt="Classic Room">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Premier Studio Suite Section -->
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-title">Premier Studio Suite Park View</div>
+                    <div class="section-subtitle">Feature 1 · Feature 2 · Feature 3</div>
+                </div>
+                <div class="gallery">
+                    <div class="gallery-item ratio-3-4" data-caption="Suite Living Room">
+                        <img src="https://images.unsplash.com/photo-1631049552057-403cdb8f0658?w=400&h=600&fit=crop" alt="Suite">
+                    </div>
+                    <div class="gallery-item ratio-1-1" data-caption="Bedroom">
+                        <img src="https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=400&h=400&fit=crop" alt="Suite">
+                    </div>
+                    <div class="gallery-item ratio-3-4" data-caption="View">
+                        <img src="https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=400&h=600&fit=crop" alt="Suite">
+                    </div>
+                    <div class="gallery-item ratio-4-3" data-caption="Bathroom">
+                        <img src="https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=400&h=300&fit=crop" alt="Suite">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const galleryContainer = document.getElementById('gallery-container');
+        const buttons = document.querySelectorAll('.hover-option');
+        let currentStyle = 'scrim';
+
+        // Parameters storage
+        const params = {
+            scrim: {
+                color: '#000000',
+                opacity: 0.3,
+                duration: 300,
+                easing: 'ease'
+            },
+            zoom: {
+                scale: 1.01,
+                duration: 400,
+                easing: 'ease'
+            },
+            radius: {
+                default: 32,
+                hover: 56,
+                duration: 500,
+                easing: 'cubic-bezier(0.4, 0, 0.2, 1)'
+            },
+            light: {
+                size: 400,
+                opacityCenter: 0.25,
+                opacityMid: 0.1,
+                midStop: 30,
+                fadeStop: 60,
+                duration: 400,
+                blend: 'overlay'
+            },
+            tilt: {
+                rotation: 2.5,
+                perspective: 1000,
+                duration: 300,
+                easing: 'cubic-bezier(0.23, 1, 0.32, 1)',
+                edgeLightIntensity: 0.8,
+                edgeWidth: 15,
+                edgeSharpness: 10,
+                edgeFalloff: 20
+            }
+        };
+
+        // Panel titles
+        const panelTitles = {
+            scrim: '🎨 Scrim Parameters',
+            zoom: '🔍 Zoom Parameters',
+            radius: '⭕ Border Radius Parameters',
+            light: '💡 Lighting Effect Parameters',
+            tilt: '🎯 3D Tilt Parameters'
+        };
+
+        // Toggle dev panel
+        const devToggle = document.getElementById('dev-toggle');
+        const devContainer = document.getElementById('dev-panel-container');
+        const panelClose = document.getElementById('panel-close');
+
+        devToggle.addEventListener('click', () => {
+            const isOpen = devContainer.classList.contains('open');
+            if (isOpen) {
+                devContainer.classList.remove('open');
+                devToggle.classList.remove('active');
+            } else {
+                devContainer.classList.add('open');
+                devToggle.classList.add('active');
+            }
+        });
+
+        panelClose.addEventListener('click', () => {
+            devContainer.classList.remove('open');
+            devToggle.classList.remove('active');
+        });
+
+        // Keyboard shortcut (Escape to close, D to toggle)
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && devContainer.classList.contains('open')) {
+                devContainer.classList.remove('open');
+                devToggle.classList.remove('active');
+            } else if (e.key === 'd' && !e.metaKey && !e.ctrlKey && document.activeElement.tagName !== 'INPUT') {
+                const isOpen = devContainer.classList.contains('open');
+                if (isOpen) {
+                    devContainer.classList.remove('open');
+                    devToggle.classList.remove('active');
+                } else {
+                    devContainer.classList.add('open');
+                    devToggle.classList.add('active');
+                }
+            }
+        });
+
+        // Handle hover style switching
+        buttons.forEach(button => {
+            button.addEventListener('click', () => {
+                // Remove active class from all buttons
+                buttons.forEach(btn => btn.classList.remove('active'));
+
+                // Add active class to clicked button
+                button.classList.add('active');
+
+                // Remove all hover classes
+                galleryContainer.className = '';
+
+                // Add selected hover class
+                const style = button.getAttribute('data-style');
+                currentStyle = style;
+                galleryContainer.classList.add(`hover-${style}`);
+
+                // Show/hide dev panels
+                document.querySelectorAll('.dev-panel').forEach(panel => {
+                    panel.classList.remove('active');
+                });
+                document.getElementById(`dev-panel-${style}`).classList.add('active');
+
+                // Update panel title
+                document.getElementById('panel-title').textContent = panelTitles[style];
+
+                // Apply current parameters
+                applyStyles(style);
+            });
+        });
+
+        // Function to apply styles based on parameters
+        function applyStyles(style) {
+            const styleEl = document.getElementById('dynamic-styles') || document.createElement('style');
+            styleEl.id = 'dynamic-styles';
+
+            let css = '';
+
+            if (style === 'scrim') {
+                const p = params.scrim;
+                const rgb = hexToRgb(p.color);
+                css = `
+                    .hover-scrim .gallery-item::after {
+                        background: rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0);
+                        transition: background ${p.duration}ms ${p.easing};
+                    }
+                    .hover-scrim .gallery-item:hover::after {
+                        background: rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${p.opacity});
+                    }
+                `;
+            } else if (style === 'zoom') {
+                const p = params.zoom;
+                css = `
+                    .hover-zoom .gallery-item img {
+                        transition: transform ${p.duration}ms ${p.easing};
+                    }
+                    .hover-zoom .gallery-item:hover img {
+                        transform: scale(${p.scale});
+                    }
+                `;
+            } else if (style === 'radius') {
+                const p = params.radius;
+                css = `
+                    .hover-radius .gallery-item {
+                        border-radius: ${p.default}px;
+                        transition: border-radius ${p.duration}ms ${p.easing};
+                    }
+                    .hover-radius .gallery-item:hover {
+                        border-radius: ${p.hover}px;
+                    }
+                `;
+            } else if (style === 'light') {
+                const p = params.light;
+                css = `
+                    .hover-light .gallery-item::before {
+                        background: radial-gradient(circle ${p.size}px at var(--mouse-x, 50%) var(--mouse-y, 50%),
+                            rgba(255, 255, 255, ${p.opacityCenter}) 0%,
+                            rgba(255, 255, 255, ${p.opacityMid}) ${p.midStop}%,
+                            transparent ${p.fadeStop}%);
+                        transition: opacity ${p.duration}ms ease;
+                        mix-blend-mode: ${p.blend};
+                    }
+                `;
+            } else if (style === 'tilt') {
+                const p = params.tilt;
+                css = `
+                    .hover-tilt .gallery-item {
+                        transform-style: preserve-3d;
+                        transition: transform ${p.duration}ms ${p.easing};
+                    }
+                    .hover-tilt .gallery-item img {
+                        transform: translateZ(0);
+                        transition: transform ${p.duration}ms ${p.easing};
+                    }
+                    .hover-tilt .gallery-item::before {
+                        content: '';
+                        position: absolute;
+                        inset: 0;
+                        background:
+                            linear-gradient(var(--edge-angle, 0deg),
+                                rgba(255, 255, 255, var(--edge-intensity, 0)) 0%,
+                                rgba(255, 255, 255, calc(var(--edge-intensity, 0) * 0.5)) ${p.edgeWidth}%,
+                                rgba(255, 255, 255, 0) ${p.edgeFalloff}%),
+                            linear-gradient(calc(var(--edge-angle, 0deg) + 180deg),
+                                rgba(0, 0, 0, calc(var(--edge-intensity, 0) * 0.5)) 0%,
+                                rgba(0, 0, 0, calc(var(--edge-intensity, 0) * 0.3)) ${p.edgeWidth}%,
+                                rgba(0, 0, 0, 0) ${p.edgeFalloff}%);
+                        box-shadow:
+                            inset calc(var(--shadow-x, 0) * 1px) calc(var(--shadow-y, 0) * 1px) ${p.edgeSharpness * 3}px rgba(255, 255, 255, calc(var(--edge-intensity, 0) * 0.5)),
+                            inset calc(var(--shadow-x, 0) * -1px) calc(var(--shadow-y, 0) * -1px) ${p.edgeSharpness * 3}px rgba(0, 0, 0, calc(var(--edge-intensity, 0) * 0.3));
+                        opacity: 0;
+                        transition: opacity ${p.duration}ms ${p.easing};
+                        pointer-events: none;
+                        border-radius: inherit;
+                    }
+                    .hover-tilt .gallery-item:hover::before {
+                        opacity: 1;
+                    }
+                    .hover-tilt .gallery-item::after {
+                        content: '';
+                        position: absolute;
+                        inset: 0;
+                        border-radius: inherit;
+                        box-shadow:
+                            inset calc(var(--highlight-x, 0) * 2px) calc(var(--highlight-y, 0) * 2px) ${p.edgeSharpness}px rgba(255, 255, 255, calc(var(--edge-intensity, 0) * 0.8)),
+                            inset calc(var(--highlight-x, 0) * -2px) calc(var(--highlight-y, 0) * -2px) ${p.edgeSharpness}px rgba(0, 0, 0, calc(var(--edge-intensity, 0) * 0.5));
+                        opacity: 0;
+                        transition: opacity ${p.duration}ms ${p.easing};
+                        pointer-events: none;
+                    }
+                    .hover-tilt .gallery-item:hover::after {
+                        opacity: 1;
+                    }
+                `;
+            }
+
+            styleEl.textContent = css;
+            if (!document.getElementById('dynamic-styles')) {
+                document.head.appendChild(styleEl);
+            }
+        }
+
+        // Helper function to convert hex to rgb
+        function hexToRgb(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : { r: 0, g: 0, b: 0 };
+        }
+
+        // Helper function to bind slider and input
+        function bindControl(sliderId, inputId, paramPath, style, formatter = (v) => v) {
+            const slider = document.getElementById(sliderId);
+            const input = document.getElementById(inputId);
+
+            slider.addEventListener('input', (e) => {
+                const value = formatter(e.target.value);
+                input.value = e.target.value;
+                setNestedParam(paramPath, value);
+                applyStyles(style);
+            });
+
+            input.addEventListener('input', (e) => {
+                const value = formatter(e.target.value);
+                slider.value = e.target.value;
+                setNestedParam(paramPath, value);
+                applyStyles(style);
+            });
+        }
+
+        function setNestedParam(path, value) {
+            const parts = path.split('.');
+            let obj = params;
+            for (let i = 0; i < parts.length - 1; i++) {
+                obj = obj[parts[i]];
+            }
+            obj[parts[parts.length - 1]] = value;
+        }
+
+        // Initialize parameter controls
+        function initControls() {
+            // Scrim controls
+            const scrimColor = document.getElementById('scrim-color');
+            const scrimColorInput = document.getElementById('scrim-color-input');
+
+            scrimColor.addEventListener('input', (e) => {
+                params.scrim.color = e.target.value;
+                scrimColorInput.value = e.target.value;
+                applyStyles('scrim');
+            });
+
+            scrimColorInput.addEventListener('input', (e) => {
+                params.scrim.color = e.target.value;
+                scrimColor.value = e.target.value;
+                applyStyles('scrim');
+            });
+
+            bindControl('scrim-opacity', 'scrim-opacity-input', 'scrim.opacity', 'scrim', parseFloat);
+            bindControl('scrim-duration', 'scrim-duration-input', 'scrim.duration', 'scrim', parseInt);
+
+            document.getElementById('scrim-easing').addEventListener('change', (e) => {
+                params.scrim.easing = e.target.value;
+                applyStyles('scrim');
+            });
+
+            // Zoom controls
+            bindControl('zoom-scale', 'zoom-scale-input', 'zoom.scale', 'zoom', parseFloat);
+            bindControl('zoom-duration', 'zoom-duration-input', 'zoom.duration', 'zoom', parseInt);
+
+            document.getElementById('zoom-easing').addEventListener('change', (e) => {
+                params.zoom.easing = e.target.value;
+                applyStyles('zoom');
+            });
+
+            // Radius controls
+            bindControl('radius-default', 'radius-default-input', 'radius.default', 'radius', parseInt);
+            bindControl('radius-hover', 'radius-hover-input', 'radius.hover', 'radius', parseInt);
+            bindControl('radius-duration', 'radius-duration-input', 'radius.duration', 'radius', parseInt);
+
+            document.getElementById('radius-easing').addEventListener('change', (e) => {
+                params.radius.easing = e.target.value;
+                applyStyles('radius');
+            });
+
+            // Light controls
+            bindControl('light-size', 'light-size-input', 'light.size', 'light', parseInt);
+            bindControl('light-opacity-center', 'light-opacity-center-input', 'light.opacityCenter', 'light', parseFloat);
+            bindControl('light-opacity-mid', 'light-opacity-mid-input', 'light.opacityMid', 'light', parseFloat);
+            bindControl('light-mid-stop', 'light-mid-stop-input', 'light.midStop', 'light', parseInt);
+            bindControl('light-fade-stop', 'light-fade-stop-input', 'light.fadeStop', 'light', parseInt);
+            bindControl('light-duration', 'light-duration-input', 'light.duration', 'light', parseInt);
+
+            document.getElementById('light-blend').addEventListener('change', (e) => {
+                params.light.blend = e.target.value;
+                applyStyles('light');
+            });
+
+            // Tilt controls
+            bindControl('tilt-rotation', 'tilt-rotation-input', 'tilt.rotation', 'tilt', parseFloat);
+            bindControl('tilt-perspective', 'tilt-perspective-input', 'tilt.perspective', 'tilt', parseInt);
+            bindControl('tilt-duration', 'tilt-duration-input', 'tilt.duration', 'tilt', parseInt);
+            bindControl('tilt-edge-intensity', 'tilt-edge-intensity-input', 'tilt.edgeLightIntensity', 'tilt', parseFloat);
+            bindControl('tilt-edge-width', 'tilt-edge-width-input', 'tilt.edgeWidth', 'tilt', parseInt);
+            bindControl('tilt-edge-sharpness', 'tilt-edge-sharpness-input', 'tilt.edgeSharpness', 'tilt', parseInt);
+            bindControl('tilt-edge-falloff', 'tilt-edge-falloff-input', 'tilt.edgeFalloff', 'tilt', parseInt);
+
+            document.getElementById('tilt-easing').addEventListener('change', (e) => {
+                params.tilt.easing = e.target.value;
+                applyStyles('tilt');
+            });
+        }
+
+        // Copy CSS functionality
+        const copyCssBtn = document.getElementById('copy-css-btn');
+        copyCssBtn.addEventListener('click', () => {
+            const css = generateCSS(currentStyle);
+            navigator.clipboard.writeText(css).then(() => {
+                const originalText = copyCssBtn.innerHTML;
+                copyCssBtn.innerHTML = '<span>✓ Copied!</span>';
+                copyCssBtn.classList.add('copied');
+                setTimeout(() => {
+                    copyCssBtn.innerHTML = originalText;
+                    copyCssBtn.classList.remove('copied');
+                }, 2000);
+            });
+        });
+
+        function generateCSS(style) {
+            if (style === 'scrim') {
+                const p = params.scrim;
+                const rgb = hexToRgb(p.color);
+                return `.gallery-item::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0);
+    transition: background ${p.duration}ms ${p.easing};
+    pointer-events: none;
+}
+
+.gallery-item:hover::after {
+    background: rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${p.opacity});
+}`;
+            } else if (style === 'zoom') {
+                const p = params.zoom;
+                return `.gallery-item img {
+    transition: transform ${p.duration}ms ${p.easing};
+}
+
+.gallery-item:hover img {
+    transform: scale(${p.scale});
+}`;
+            } else if (style === 'radius') {
+                const p = params.radius;
+                return `.gallery-item {
+    border-radius: ${p.default}px;
+    transition: border-radius ${p.duration}ms ${p.easing};
+}
+
+.gallery-item:hover {
+    border-radius: ${p.hover}px;
+}`;
+            } else if (style === 'light') {
+                const p = params.light;
+                return `.gallery-item::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle ${p.size}px at var(--mouse-x, 50%) var(--mouse-y, 50%),
+        rgba(255, 255, 255, ${p.opacityCenter}) 0%,
+        rgba(255, 255, 255, ${p.opacityMid}) ${p.midStop}%,
+        transparent ${p.fadeStop}%);
+    opacity: 0;
+    transition: opacity ${p.duration}ms ease;
+    pointer-events: none;
+    border-radius: inherit;
+    mix-blend-mode: ${p.blend};
+}
+
+.gallery-item:hover::before {
+    opacity: 1;
+}
+
+/* JavaScript for mouse tracking */
+document.addEventListener('mousemove', (e) => {
+    const items = document.querySelectorAll('.gallery-item');
+    items.forEach(item => {
+        const rect = item.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width) * 100;
+        const y = ((e.clientY - rect.top) / rect.height) * 100;
+        item.style.setProperty('--mouse-x', x + '%');
+        item.style.setProperty('--mouse-y', y + '%');
+    });
+});`;
+            } else if (style === 'tilt') {
+                const p = params.tilt;
+                return `.gallery-item {
+    transform-style: preserve-3d;
+    transition: transform ${p.duration}ms ${p.easing};
+}
+
+.gallery-item img {
+    transform: translateZ(0);
+    transition: transform ${p.duration}ms ${p.easing};
+}
+
+.gallery-item::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        var(--light-angle, 45deg),
+        rgba(255, 255, 255, var(--light-intensity, 0)) 0%,
+        rgba(255, 255, 255, 0) var(--light-spread, ${p.edgeLightSpread}%)
+    );
+    opacity: 0;
+    transition: opacity ${p.duration}ms ${p.easing};
+    pointer-events: none;
+    border-radius: inherit;
+    mix-blend-mode: overlay;
+}
+
+.gallery-item:hover::before {
+    opacity: 1;
+}
+
+/* JavaScript for 3D tilt with bevel/emboss lighting */
+document.addEventListener('mousemove', (e) => {
+    const items = document.querySelectorAll('.gallery-item');
+    items.forEach(item => {
+        const rect = item.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+
+        if (e.clientX >= rect.left && e.clientX <= rect.right &&
+            e.clientY >= rect.top && e.clientY <= rect.bottom) {
+
+            const deltaX = (e.clientX - centerX) / (rect.width / 2);
+            const deltaY = (e.clientY - centerY) / (rect.height / 2);
+
+            const rotateX = -deltaY * ${p.rotation};
+            const rotateY = deltaX * ${p.rotation};
+
+            item.style.transform = \`perspective(${p.perspective}px) rotateX(\${rotateX}deg) rotateY(\${rotateY}deg)\`;
+
+            // Calculate edge lighting angle and intensity
+            const angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
+            const tiltAmount = Math.sqrt(rotateX * rotateX + rotateY * rotateY) / ${p.rotation};
+            const intensity = Math.min(tiltAmount * ${p.edgeLightIntensity}, ${p.edgeLightIntensity});
+
+            const shadowMultiplier = intensity * 10;
+            const shadowX = deltaX * shadowMultiplier;
+            const shadowY = deltaY * shadowMultiplier;
+
+            item.style.setProperty('--edge-angle', angle + 'deg');
+            item.style.setProperty('--edge-intensity', intensity);
+            item.style.setProperty('--shadow-x', shadowX);
+            item.style.setProperty('--shadow-y', shadowY);
+            item.style.setProperty('--highlight-x', deltaX);
+            item.style.setProperty('--highlight-y', deltaY);
+            item.style.setProperty('--edge-width', '${p.edgeWidth}%');
+            item.style.setProperty('--edge-sharpness', ${p.edgeSharpness});
+            item.style.setProperty('--edge-falloff', '${p.edgeFalloff}%');
+            item.style.setProperty('--edge-blur', ${p.edgeSharpness * 3});
+        } else {
+            item.style.transform = 'perspective(${p.perspective}px) rotateX(0deg) rotateY(0deg)';
+            item.style.setProperty('--edge-intensity', '0');
+        }
+    });
+});`;
+            }
+            return '';
+        }
+
+        // Mouse tracking for lighting effect
+        document.addEventListener('mousemove', (e) => {
+            if (currentStyle === 'light') {
+                const items = document.querySelectorAll('.gallery-item');
+                items.forEach(item => {
+                    const rect = item.getBoundingClientRect();
+                    const x = ((e.clientX - rect.left) / rect.width) * 100;
+                    const y = ((e.clientY - rect.top) / rect.height) * 100;
+                    item.style.setProperty('--mouse-x', `${x}%`);
+                    item.style.setProperty('--mouse-y', `${y}%`);
+                });
+            }
+        });
+
+        // Mouse tracking for 3D tilt effect
+        document.addEventListener('mousemove', (e) => {
+            if (currentStyle === 'tilt') {
+                const items = document.querySelectorAll('.gallery-item');
+                items.forEach(item => {
+                    const rect = item.getBoundingClientRect();
+                    const centerX = rect.left + rect.width / 2;
+                    const centerY = rect.top + rect.height / 2;
+
+                    // Only apply tilt when hovering over the item
+                    if (e.clientX >= rect.left && e.clientX <= rect.right &&
+                        e.clientY >= rect.top && e.clientY <= rect.bottom) {
+
+                        const deltaX = (e.clientX - centerX) / (rect.width / 2);
+                        const deltaY = (e.clientY - centerY) / (rect.height / 2);
+
+                        const rotateX = -deltaY * params.tilt.rotation;
+                        const rotateY = deltaX * params.tilt.rotation;
+
+                        item.style.transform = `perspective(${params.tilt.perspective}px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+
+                        // Calculate edge lighting angle based on tilt direction
+                        const angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
+                        const edgeAngle = angle; // Direct angle for gradient direction
+
+                        // Calculate intensity based on tilt amount
+                        const tiltAmount = Math.sqrt(rotateX * rotateX + rotateY * rotateY) / params.tilt.rotation;
+                        const intensity = Math.min(tiltAmount * params.tilt.edgeLightIntensity, params.tilt.edgeLightIntensity);
+
+                        // Calculate shadow offset based on tilt (opposite to tilt direction)
+                        const shadowMultiplier = intensity * 10;
+                        const shadowX = deltaX * shadowMultiplier;
+                        const shadowY = deltaY * shadowMultiplier;
+
+                        // Highlight on the opposite side (from light source)
+                        const highlightX = deltaX;
+                        const highlightY = deltaY;
+
+                        item.style.setProperty('--edge-angle', `${edgeAngle}deg`);
+                        item.style.setProperty('--edge-intensity', intensity);
+                        item.style.setProperty('--shadow-x', shadowX);
+                        item.style.setProperty('--shadow-y', shadowY);
+                        item.style.setProperty('--highlight-x', highlightX);
+                        item.style.setProperty('--highlight-y', highlightY);
+                        item.style.setProperty('--edge-width', `${params.tilt.edgeWidth}%`);
+                        item.style.setProperty('--edge-sharpness', params.tilt.edgeSharpness);
+                        item.style.setProperty('--edge-falloff', `${params.tilt.edgeFalloff}%`);
+                        item.style.setProperty('--edge-blur', params.tilt.edgeSharpness * 3);
+                    } else {
+                        item.style.transform = `perspective(${params.tilt.perspective}px) rotateX(0deg) rotateY(0deg)`;
+                        item.style.setProperty('--edge-intensity', '0');
+                    }
+                });
+            }
+        });
+
+        // Reset tilt when mouse leaves
+        document.addEventListener('mouseleave', () => {
+            if (currentStyle === 'tilt') {
+                const items = document.querySelectorAll('.gallery-item');
+                items.forEach(item => {
+                    item.style.transform = `perspective(${params.tilt.perspective}px) rotateX(0deg) rotateY(0deg)`;
+                    item.style.setProperty('--edge-intensity', '0');
+                });
+            }
+        });
+
+        // Initialize on load
+        initControls();
+        applyStyles('scrim');
+    </script>
+</body>
+</html>
